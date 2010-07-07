@@ -2,8 +2,52 @@
 (tool-bar-mode 0)
 
 ;; Default to 100x40
-;(add-to-list 'default-frame-alist '(width . 100))
-;(add-to-list 'default-frame-alist '(height . 40))
+(add-to-list 'default-frame-alist '(height . 40))
+(add-to-list 'default-frame-alist '(width . 100))
+
+;; http://avdi.org/devblog/2010/04/23/daemonic-emacs/
+;; Start either gnuserv or emacsserver for external access
+(if (and (or
+          (eq 'windows-nt system-type)
+          (featurep 'xemacs))
+         (locate-library "gnuserv")
+         (locate-file "gnuserv" exec-path '(".exe" "")))
+    (progn (require 'gnuserv)
+           (gnuserv-start))
+  (when (not (eq 'windows-nt system-type)) (server-start)))
+
+;; Start up edit-server for Google Chrome Emacs integration
+;(if (and (daemonp) (locate-library "edit-server"))
+;    (progn
+;      (require 'edit-server)
+;      (edit-server-start)))
+
+;; Sweet color theme
+(defun color-theme-dark-bliss ()
+  ""
+  (interactive)
+  (color-theme-install
+   '(color-theme-dark-bliss
+     ((foreground-color . "#eeeeee")
+      (background-color . "#001122")
+      (background-mode . dark)
+      (cursor-color . "#ccffcc"))
+     (bold ((t (:bold t))))
+     (bold-italic ((t (:italic t :bold t))))
+     (default ((t (nil))))
+
+     (font-lock-builtin-face ((t (:foreground "#f0f0aa"))))
+     (font-lock-comment-face ((t (:italic t :foreground "#aaccaa"))))
+     (font-lock-delimiter-face ((t (:foreground "#aaccaa"))))
+     (font-lock-constant-face ((t (:bold t :foreground "#ffaa88"))))
+     (font-lock-doc-string-face ((t (:foreground "#eeccaa"))))
+     (font-lock-doc-face ((t (:foreground "#eeccaa"))))
+     (font-lock-reference-face ((t (:foreground "#aa99cc"))))
+     (font-lock-function-name-face ((t (:foreground "#ffbb66"))))
+     (font-lock-keyword-face ((t (:foreground "#ccffaa"))))
+     (font-lock-preprocessor-face ((t (:foreground "#aaffee"))))
+     (font-lock-string-face ((t (:foreground "#bbbbff")))))))
+
 			 
 ;; Awesome tabs macros from Emacs wiki; uses tabs to indent and spaces to align
 ;; Use tabs for indentation
@@ -23,27 +67,27 @@
 
 (defadvice indent-according-to-mode (around smart-tabs activate)
   (let ((indent-tabs-mode indent-tabs-mode))
-	(if (memq indent-line-function
-			  '(indent-relative
-				indent-relative-maybe))
-		(setq indent-tabs-mode nil))
-	ad-do-it))
+		(if (memq indent-line-function
+							'(indent-relative
+								indent-relative-maybe))
+				(setq indent-tabs-mode nil))
+		ad-do-it))
 
 (defmacro smart-tabs-advice (function offset)
   (defvaralias offset 'tab-width)
   `(defadvice ,function (around smart-tabs activate)
-	 (cond
-	  (indent-tabs-mode
-	   (save-excursion
-		 (beginning-of-line)
-		 (while (looking-at "\t*\\( +\\)\t+")
-		   (replace-match "" nil nil nil 1)))
-	   (setq tab-width tab-width)
-	   (let ((tab-width fill-column)
-			 (,offset fill-column))
-		 ad-do-it))
-	  (t
-	   ad-do-it))))
+		 (cond
+			(indent-tabs-mode
+			 (save-excursion
+				 (beginning-of-line)
+				 (while (looking-at "\t*\\( +\\)\t+")
+					 (replace-match "" nil nil nil 1)))
+			 (setq tab-width tab-width)
+			 (let ((tab-width fill-column)
+						 (,offset fill-column))
+				 ad-do-it))
+			(t
+			 ad-do-it))))
 
 (smart-tabs-advice c-indent-line c-basic-offset)	
 (smart-tabs-advice c-indent-region c-basic-offset)
