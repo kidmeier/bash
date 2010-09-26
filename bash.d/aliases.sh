@@ -9,6 +9,6 @@ alias l='ls -CF'
 alias lsps='ps auxf|less -S'
 alias lspse='ps auxef|less -S'
 
-alias where='for i in `dirs`; do  echo $i; done'
+alias where='N=0; for i in `dirs`; do  echo $N: $i; N=$((N+1)); done'
 alias config='git --git-dir=/home/mike/.config.git/ --work-tree=/home/mike'
 
