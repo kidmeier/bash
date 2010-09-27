@@ -4,6 +4,8 @@
 ;; Default to 100x40
 (add-to-list 'default-frame-alist '(height . 40))
 (add-to-list 'default-frame-alist '(width . 100))
+(add-to-list 'initial-frame-alist '(height . 40))
+(add-to-list 'initial-frame-alist '(width . 100))
 
 ;; http://avdi.org/devblog/2010/04/23/daemonic-emacs/
 ;; Start either gnuserv or emacsserver for external access
