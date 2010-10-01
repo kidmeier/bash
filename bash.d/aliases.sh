@@ -1,3 +1,5 @@
+alias config='git --git-dir=/home/mike/.config.git/ --work-tree=/home/mike'
+
 alias edit='emacs -nw'
 alias browse='nautilus --browser --no-desktop &'
 alias helios='~/tools/helios/eclipse &'
@@ -10,5 +12,12 @@ alias lsps='ps auxf|less -S'
 alias lspse='ps auxef|less -S'
 
 alias where='N=0; for i in `dirs`; do  echo $N: $i; N=$((N+1)); done'
-alias config='git --git-dir=/home/mike/.config.git/ --work-tree=/home/mike'
+alias bt='where'
+alias swap='pushd'
+
+function fr() {
+
+	pushd +$1
+
+}
 
