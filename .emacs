@@ -1,7 +1,22 @@
+(add-to-list 'load-path "~/emacs.d/")
+
 ;; Disable toolbar
 (tool-bar-mode 0)
 
-;; Default to 100x40
+;; Line numbers please
+(global-linum-mode 1)
+
+;; Keep it clean
+(setq inhibit-startup-message t
+	  inhibit-startup-echo-area-message t)
+
+;; Help me!
+(setq ido-enable-flex-matching t
+	  ido-everywhere t
+	  ido-use-filename-at-point 'guess)
+(ido-mode 1)
+
+;; Default to 80x40
 (add-to-list 'default-frame-alist '(height . 40))
 (add-to-list 'default-frame-alist '(width . 80))
 (add-to-list 'initial-frame-alist '(height . 40))
@@ -24,33 +39,6 @@
 ;      (require 'edit-server)
 ;      (edit-server-start)))
 
-;; Sweet color theme
-(defun color-theme-dark-bliss ()
-  ""
-  (interactive)
-  (color-theme-install
-   '(color-theme-dark-bliss
-     ((foreground-color . "#eeeeee")
-      (background-color . "#001122")
-      (background-mode . dark)
-      (cursor-color . "#ccffcc"))
-     (bold ((t (:bold t))))
-     (bold-italic ((t (:italic t :bold t))))
-     (default ((t (nil))))
-
-     (font-lock-builtin-face ((t (:foreground "#f0f0aa"))))
-     (font-lock-comment-face ((t (:italic t :foreground "#aaccaa"))))
-     (font-lock-delimiter-face ((t (:foreground "#aaccaa"))))
-     (font-lock-constant-face ((t (:bold t :foreground "#ffaa88"))))
-     (font-lock-doc-string-face ((t (:foreground "#eeccaa"))))
-     (font-lock-doc-face ((t (:foreground "#eeccaa"))))
-     (font-lock-reference-face ((t (:foreground "#aa99cc"))))
-     (font-lock-function-name-face ((t (:foreground "#ffbb66"))))
-     (font-lock-keyword-face ((t (:foreground "#ccffaa"))))
-     (font-lock-preprocessor-face ((t (:foreground "#aaffee"))))
-     (font-lock-string-face ((t (:foreground "#bbbbff")))))))
-
-			 
 ;; Awesome tabs macros from Emacs wiki; uses tabs to indent and spaces to align
 ;; Use tabs for indentation
 (setq-default tab-width 4) ; or any other preferred value
@@ -117,4 +105,4 @@
   ;; If you edit it by hand, you could mess it up, so be careful.
   ;; Your init file should contain only one such instance.
   ;; If there is more than one, they won't work right.
- '(default ((t (:inherit nil :stipple nil :background "white" :foreground "black" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 115 :width normal :foundry "unknown" :family "DejaVu Sans Mono")))))
+ '(default ((t (:inherit nil :stipple nil :background "white" :foreground "black" :inverse-video nil :box nil :strike-through nil :overline nil :underline nil :slant normal :weight normal :height 90 :width normal :foundry "unknown" :family "DejaVu Sans Mono")))))

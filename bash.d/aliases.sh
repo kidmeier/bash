@@ -1,5 +1,6 @@
 alias config='git --git-dir=/home/mike/.config.git/ --work-tree=/home/mike'
 
+alias reverse-dns='dig +noall +answer -x'
 alias edit='emacs -nw'
 alias browse='nautilus --browser --no-desktop &'
 alias helios='~/tools/helios/eclipse &'
