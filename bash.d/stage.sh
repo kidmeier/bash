@@ -1,6 +1,29 @@
 test -z "$JVMTI_VARIANT" && export JVMTI_VARIANT="debug"
 test -z "$JVMTI_ARCH"    && export JVMTI_ARCH="IA-32"
 
+function stage-probekit() {
+
+	if [ -z "$1" -o -z "$2" ]
+	then
+		echo "usage: stage-probekit [source] [dest]"
+		return
+	else
+		src="$1"
+		acDest="$2"
+		probekitDest="${acDest}/plugins/org.eclipse.hyades.probekit"
+		jpiDest="${acDest}/plugins/org.eclipse.tptp.javaprofiler"
+	fi
+
+	[ -n "${debug}" ] && variant=Debug || variant=Release
+	bciEngProbe="${src}/BCI/${variant}/BCIEngProbe.so"
+#	agentExt="${src}/ProbeAgentExtension/ProbeAgentExtension.so"
+
+	cp -f "${bciEngProbe}" "${jpiDest}/libBCIEngProbe.so"
+	cp -f "${bciEngProbe}" "${probekitDest}/lib/BCIEngProbe.so"
+#	cp -f "${agentExt}" "${probekitDest}/lib/ProbeAgentExtension.so"
+
+}
+
 function stage-jvmti() {
 	
 	if [ -z "$1" -o -z "$2" ]
@@ -95,9 +118,50 @@ function stage-ac() {
 
 }
 
+function build-and-stage-workspace() {
+	
+	if [ -z "$1" -o -z "$2" -o -z "$3" ]
+	then
+		echo "usage: build-and-stage-workspace [staged-ac] [workspace] [arch]"
+		return
+	fi
+
+	stagedAc="$1"
+	
+	workspace="$2"
+	acSrc="$workspace/org.eclipse.tptp.platform.agentcontroller/src-native-new"
+	jvmtiSrc="$workspace/org.eclipse.tptp.platform.jvmti.runtime/src-native"
+	probekitSrc="$workspace/org.eclipse.hyades.probekit/src-native"
+
+	arch="$3"
+
+	[ ! -d "$stagedAc" ] && echo -e "\nNo such directory: $stagedAc\n" && return
+	[ ! -d "$workspace" ] && echo -e "\nNo such directory: $workspace\n" && return
+	[ ! -d "$acSrc" ] && echo -e "\nNo such directory: $acSrc\n" && return
+	[ ! -d "$jvmtiSrc" ] && echo -e "\nNo such directory: $jvmtiSrc\n" && return
+	[ ! -d "$probekitSrc" ] && echo -e "\nNo such directory: $probekitSrc\n" && return
+
+	pushd "$acSrc/build" \
+		&& ./build_tptp_ac.script clean \
+		&& ./build_tptp_ac.script \
+		&& stage-ac .. "$stagedAc" \
+		&& popd \
+	&& pushd "$jvmtiSrc/build" \
+		&& ./build_tptp_all.script clean \
+		&& ./build_tptp_all.script \
+		&& stage-jvmti .. "$stagedAc" \
+		&& popd \
+	&& pushd "$probekitSrc" \
+		&& make clean && make \
+		&& stage-probekit . "$stagedAc" \
+		&& popd \
+	&& stage-link-workspace "$stagedAc" "$workspace" "$arch"
+
+}
+
 function make-ac() {
 
-	[ -z "$TAH" ] && echo "Set TAH to point at the source AC" && return 1
+	[ -z "$SRC_AC" ] && echo "Set SRC_AC to point at the source AC" && return 1
 	[ -z "$XERCESC_HOME" ] && echo "Must set XERCESC_HOME" && return 1
 	[ -z "$CBE_SDK_HOME" ] && echo "Must set CBE_SDK_HOME" && return 1
 
@@ -105,12 +169,12 @@ function make-ac() {
 	mkdir config
 	mkdir lib
 
-	cp $TAH/bin/*.sh ./bin/
-	cp -R $TAH/plugins ./
-	cp -R $TAH/Resources ./
-	cp -R $TAH/security ./
+	cp $SRC_AC/bin/*.sh ./bin/
+	cp -R $SRC_AC/plugins ./
+	cp -R $SRC_AC/Resources ./
+	cp -R $SRC_AC/security ./
 
-	cp $TAH/lib/config.jar ./lib
+	cp $SRC_AC/lib/config.jar ./lib
 	cp $XERCESC_HOME/lib/* ./lib
 	cp $CBE_SDK_HOME/lib/* ./lib
 
