@@ -129,6 +129,7 @@ function build-and-stage-workspace() {
 	stagedAc="$1"
 	
 	workspace="$2"
+	vrfySrc="$workspace/org.apache.harmony_vmcore_verifier"
 	acSrc="$workspace/org.eclipse.tptp.platform.agentcontroller/src-native-new"
 	jvmtiSrc="$workspace/org.eclipse.tptp.platform.jvmti.runtime/src-native"
 	probekitSrc="$workspace/org.eclipse.hyades.probekit/src-native"
@@ -137,6 +138,7 @@ function build-and-stage-workspace() {
 
 	[ ! -d "$stagedAc" ] && echo -e "\nNo such directory: $stagedAc\n" && return
 	[ ! -d "$workspace" ] && echo -e "\nNo such directory: $workspace\n" && return
+	[ ! -d "$vrfySrc" ] && echo -e "\nNo such directory: $vrfySrc\n" && return
 	[ ! -d "$acSrc" ] && echo -e "\nNo such directory: $acSrc\n" && return
 	[ ! -d "$jvmtiSrc" ] && echo -e "\nNo such directory: $jvmtiSrc\n" && return
 	[ ! -d "$probekitSrc" ] && echo -e "\nNo such directory: $probekitSrc\n" && return
@@ -145,6 +147,10 @@ function build-and-stage-workspace() {
 		&& ./build_tptp_ac.script clean \
 		&& ./build_tptp_ac.script \
 		&& stage-ac .. "$stagedAc" \
+		&& popd \
+	&& pushd "$vrfySrc/build" \
+		&& make -f makefile.linux clean \
+		&& make -f makefile.linux \
 		&& popd \
 	&& pushd "$jvmtiSrc/build" \
 		&& ./build_tptp_all.script clean \
