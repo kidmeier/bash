@@ -1,6 +1,54 @@
 test -z "$JVMTI_VARIANT" && export JVMTI_VARIANT="debug"
 test -z "$JVMTI_ARCH"    && export JVMTI_ARCH="IA-32"
 
+function staging-build-env-echo() {
+
+	echo "Build dependencies:"
+	echo -e "\tJAVA_HOME=${JAVA_HOME}"
+	echo -e "\tCBE_SDK_HOME=${CBE_SDK_HOME}"
+	echo -e "\tTPTP_ACSDK_HOME=${TPTP_ACSDK_HOME}"
+	echo -e "\tRASERVER_SDK=${RASERVER_SDK}"
+	echo -e ""
+	echo -e "Build settings:"
+	echo -e "\tJVMTI_VARIANT=${JVMTI_VARIANT}\t(org.eclipse.tptp.platform.jvmti.runtime)"
+	echo -e "\tJVMTI_ARCH=${JVMTI_ARCH}\t(org.eclipse.tptp.platform.jvmti.runtime)"
+	echo -e "\tdebug=${debug}\t\t(org.eclipse.hyades.probekit)"
+	echo -e "\tDEBUGABLE=${DEBUGABLE}\t(org.eclipse.tptp.platform.agentcontroller)"
+	echo -e "\tFORCE32=${FORCE32}\t(org.eclipse.tptp.platform.agentcontroller)"
+	echo -e "\tOPTIMIZABLE=${OPTIMIZABLE}\t(org.eclipse.tptp.platform.agentcontroller)"
+	echo -e "\tRELEASE=${RELEASE}\t(org.apache.harmony_vmcore_verifier)"
+	echo -e "\tSIXTYFOURBIT=${SIXTYFOURBIT}\t(org.eclipse.tptp.platform.agentcontroller)"
+
+}
+
+function staging-build-env-release() {
+
+	# setup release env vars for jvmti.runtime, verifier, agentcontroller
+	export JVMTI_VARIANT=release
+	export RELEASE=1
+	unset OPTIMIZABLE # remove this; the AC build script will configure a default
+
+	# disable debug vars for verifier, probekit, agentcontroller
+	unset DEBUG
+	unset debug
+	unset DEBUGABLE
+
+}
+
+function staging-build-env-debug() {
+
+	# setup release env vars for jvmti.runtime, verifier, agentcontroller
+	export JVMTI_VARIANT=debug
+	export DEBUG=1
+	export debug=1
+	export DEBUGABLE="-g3"
+
+	# disable release vars for verifier, probekit, agentcontroller
+	unset RELEASE
+	export OPTIMIZABLE=" "
+
+}
+
 function stage-probekit() {
 
 	if [ -z "$1" -o -z "$2" ]
@@ -16,11 +64,9 @@ function stage-probekit() {
 
 	[ -n "${debug}" ] && variant=Debug || variant=Release
 	bciEngProbe="${src}/BCI/${variant}/BCIEngProbe.so"
-#	agentExt="${src}/ProbeAgentExtension/ProbeAgentExtension.so"
 
 	cp -f "${bciEngProbe}" "${jpiDest}/libBCIEngProbe.so"
 	cp -f "${bciEngProbe}" "${probekitDest}/lib/BCIEngProbe.so"
-#	cp -f "${agentExt}" "${probekitDest}/lib/ProbeAgentExtension.so"
 
 }
 
@@ -72,10 +118,27 @@ function stage-link-workspace() {
 	jvmtiRuntime="${workspace}/org.eclipse.tptp.platform.jvmti.runtime"
 	jvmtiAgentFiles="${jvmtiRuntime}/agent_files/linux_${arch}"
 	iacHome="${workspace}/org.eclipse.tptp.platform.ac.linux_${arch}/agent_controller"
+	probekitHome="${workspace}/org.eclipse.hyades.probekit"
+	probekitVariant="`echo ${JVMTI_VARIANT:0:1} | tr 'a-z' 'A-Z'`${JVMTI_VARIANT:1}"
+
+	case "${arch}" in
+		ia32)
+			probekitNative="${probekitHome}/os/linux/x86"
+			;;
+		em64t)
+			probekitNative="${probekitHome}/os/linux/x86_64"
+			;;
+		*)
+			echo "unknown arch: '${arch}'"
+			return
+			;;
+	esac
 
 	[ -d "${acHome}" ] || (echo "${acHome} is not an AC" && return)
 	[ -d "${jvmtiAgentFiles}" ] || (echo "${jvmtiAgentFiles} does not exist" && return)
 	[ -d "${iacHome}" ] || (echo "${iacHome} does not exist" && return)
+	[ -d "${probekitHome}" ] || (echo "${probekitHome} does not exist" && return)
+	[ -d "${probekitNative}" ] || (echo "${probekitNative} does not exist" && return)
 
 	# Link stage jpi to jvmti plugin agent_files/${arch}
 	if [ -L "${jvmtiAgentFiles}" ]
@@ -93,8 +156,20 @@ function stage-link-workspace() {
 	rm -f "${iacHome}/Resources"; ln -s "${acHome}/Resources" "${iacHome}/Resources"
 	rm -f "${iacHome}/security" ; ln -s "${acHome}/security" "${iacHome}/security"
 
+	# Link stage probekit to org.eclipse.hyades.probekit/os
+	[ -L "${probekitNative}/probeinstrumenter" ] && rm -f "${probekitNative}/probeinstrumenter"
+	[ -L "${probekitNative}/BCIEngProbe.so" ] && rm -f "${probekitNative}/BCIEngProbe.so"
+
+	ln -s \
+		"${probekitHome}/src-native/BCI/${probekitVariant}/probeinstrumenter" \
+		"${probekitNative}/probeinstrumenter"
+	ln -s \
+		"${probekitHome}/src-native/BCI/${probekitVariant}/BCIEngProbe.so" \
+		"${probekitNative}/BCIEngProbe.so"
+
 	echo "${iacHome} -> ${acHome}"
 	echo "${jvmtiAgentFiles} -> ${jpiHome}"
+	echo "${probekitHome}/src-native/BCI/${probekitVariant} -> ${probekitNative}"
 
 }
 
