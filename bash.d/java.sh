@@ -1,3 +1,6 @@
+test -d "$HOME/runtimes/jdks/ibm-java-i386-70" \
+	&& export JAVA_HOME="$HOME/runtimes/jdks/ibm-java-i386-70" \
+	&& export PATH="$JAVA_HOME/bin:$PATH"
 
 function javacore() {
 

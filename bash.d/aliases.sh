@@ -4,8 +4,8 @@ alias config='git --git-dir=/home/mike/.config.git/ --work-tree=/home/mike'
 alias reverse-dns='dig +noall +answer -x'
 alias edit='emacs -nw'
 alias browse='nautilus --browser --no-desktop &'
-alias helios='~/tools/helios/eclipse &'
 alias gmake='make'
+alias debug='gdb --args'
 
 # ls
 alias ll='ls -alhF'
@@ -28,4 +28,3 @@ function fr() {
 }
 
 alias engage='play -c2 -n synth whitenoise band -n 100 24 band -n 300 100 gain +20'
-
