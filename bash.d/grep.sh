@@ -1,2 +1,2 @@
-GREP_OPTIONS="--color=always -nI"
+export GREP_OPTIONS="--color=always -nI"
 
