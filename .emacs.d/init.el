@@ -19,7 +19,8 @@
 
 ;; Color
 (load "color-theme-dark-bliss")
-(color-theme-dark-bliss)
+(load "color-theme-tomorrow")
+(color-theme-tomorrow-night)
 
 ;; C indentation
 (load "c-smart-indent")
