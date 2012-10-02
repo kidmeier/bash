@@ -92,12 +92,25 @@ function stage-jvmti() {
 	do
 		dotjava="$i"
 		dotclass="${i/.java/.class}"
-		(echo "[JAVAC] $dotjava"; \
-			javac -source 1.5 -target 1.5 "$src/src/Martini/Infrastructure/$dotjava") \
-			&& \
-			(echo "[CP] ${dotclass} -> $dst/${dotclass/*Adaptor\//}"; \
-			cp "$src/src/Martini/Infrastructure/${dotclass}" "$dst/${dotclass/*Adaptor\//}") \
-			|| return 1
+
+		statjava=`stat --format='%Y' ${src}/src/Martini/Infrastructure/${dotjava}`
+		statclass=`stat --format='%Y' ${src}/src/Martini/Infrastructure/${dotclass}`
+
+		if [ "${statjava}" -gt "${statclass}" ]
+		then
+
+			(echo "[JAVAC] $dotjava"; \
+				javac -source 1.5 -target 1.5 "$src/src/Martini/Infrastructure/$dotjava") \
+				&& \
+				(echo "[CP] ${dotclass} -> $dst/${dotclass/*Adaptor\//}"; \
+				cp "$src/src/Martini/Infrastructure/${dotclass}" "$dst/${dotclass/*Adaptor\//}") \
+				|| return 1
+		else
+
+			echo "[JAVAC] up-to-date: ${dotclass}"
+
+		fi
+
 	done
 
 }
