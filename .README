@@ -1,0 +1,12 @@
+Append to .bashrc:
+ # Pull in script libs
+ for f in $HOME/bash.d/*.sh
+ do
+         . "$f"
+ done
+
+Move into home:
+ cd bash
+ mv bash.d .emacs.d .gitignore .mediatomb ~/
+ mv .git ~/.config.git
+
