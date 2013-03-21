@@ -150,7 +150,7 @@ function oiq-deploy() {
 	done
 
 	# cleanup artifacts from other versions
-	for jar in `find "$OIQ_HOME/bin" -iname '*.jar' | grep 'SNAPSHOT' | grep -v '${version}'`
+	for jar in `find "$OIQ_HOME/bin" -iname '*.jar' | grep "${version/-SNAPSHOT}"`
 	do 
 		echo " rm $(oiq-shorten-path "$jar")"
 		rm "$jar"
