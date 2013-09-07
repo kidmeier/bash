@@ -41,6 +41,10 @@
 			(cons '("\.lua$" . lua-mode) auto-mode-alist)))
 (autoload 'lua-mode "lua-mode" "Lua editing mode." t)
 
+;; keys
+(global-set-key (kbd "<f5>") 'compile)
+(global-set-key (kbd "<f9>") 'recompile)
+
 (custom-set-variables
  ;; custom-set-variables was added by Custom.
  ;; If you edit it by hand, you could mess it up, so be careful.

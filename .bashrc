@@ -109,12 +109,3 @@ for f in $HOME/bash.d/*.sh
 do
 	. "$f"
 done
-unset UBUNTU_MENUPROXY
-
-# Migration help
-if [ -d $HOME/devl/work ]
-then
-	echo "SOMETHING IS STILL REFERENCING $HOME/devl/work:"
-	ls -l $HOME/devl/work
-fi
-

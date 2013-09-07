@@ -19,7 +19,7 @@ function oiq-shorten-path() {
 	echo "$path"
 }
 
-export PATH="$HOME/tools/jdk1.7.0_25/bin:$PATH"
+export PATH="$HOME/devl/tools/jdk1.7.0_25/bin:$PATH"
 export JDWP="-agentlib:jdwp=transport=dt_socket,suspend=n,address=localhost:8000,server=y"
 export CATALINA_OPTS="-Dhippoecm.export.dir=$OIQ_SRC/insure-web/src/main/resources $CATALINA_OPTS"
 
@@ -154,21 +154,13 @@ function oiq-clean-db() {
 	read pause
 
 	cat <<EOF | mysql -u root -p
+DROP DATABASE fleet_${environment};
 DROP DATABASE insure_${environment};
+
+CREATE DATABASE fleet_${environment} DEFAULT CHARACTER SET utf8;
 CREATE DATABASE insure_${environment} DEFAULT CHARACTER SET utf8;
 EOF
 
-}
-
-function oiq-expire-cache() {	
-	local ttl=$(test -n "$1" || echo "10080" && echo "$1")
-	local cache=$(test -n "$2" || echo "$OIQ_CACHE" && echo "$2")
-
-	echo "[OIQCACHE] ${cache} - ttl = ${ttl} minutes"
-	#echo $(date --date="-${ttl} minutes"
-
-	local count=$(find "${cache}" -type f -not -amin "+${ttl}" -print -delete | wc -l)
-	echo "[OIQCACHE ${cache}] evicted ${count} entries"
 }
 
 function oiq-clean-logs() {
