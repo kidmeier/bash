@@ -6,6 +6,9 @@ export OIQ_CACHE="$OIQ_HOME/../../cache"
 export OIQ_MINING="$OIQ_HOME/base/mining"
 export OIQ_TOMCAT="$OIQ_HOME/base/tomcat"
 
+elProject="*[local-name()='project']"
+elVersion="*[local-name()='version']"
+
 function oiq-shorten-path() {
 	test -n "$1" || (echo "usage: oiq-shorten-path <path>" && return 1)
 	local path="$1"
@@ -154,8 +157,8 @@ function oiq-clean-db() {
 	read pause
 
 	cat <<EOF | mysql -u root -p
-DROP DATABASE fleet_${environment};
-DROP DATABASE insure_${environment};
+DROP DATABASE IF EXISTS fleet_${environment};
+DROP DATABASE IF EXISTS insure_${environment};
 
 CREATE DATABASE fleet_${environment} DEFAULT CHARACTER SET utf8;
 CREATE DATABASE insure_${environment} DEFAULT CHARACTER SET utf8;
@@ -194,7 +197,7 @@ function oiq-deploy() {
 	oiq-stop
 
 	# determine version
-	local version=$(xpath -e '/project/version/text()' $OIQ_SRC/pom.xml 2>/dev/null)
+	local version="$(xmlstarlet sel -t -v "//$elProject/$elVersion/text()" ${OIQ_SRC}/pom.xml 2>/dev/null)"
 	local revision=$(git "--git-dir=$OIQ_SRC/.git" rev-parse --verify HEAD)
 	echo "[DEPLOY] ${version}-${revision}"
 
@@ -228,7 +231,7 @@ function oiq-redeploy() {
 
 function oiq-clean-mvn-repo() {
 
-	local version=$(xpath -e '/project/version/text()' $OIQ_SRC/pom.xml 2>/dev/null)
+	local version="$(xmlstarlet sel -t -v "//$elProject/$elVersion/text()" ${OIQ_SRC}/pom.xml 2>/dev/null)"
 
 	# remove all built artifacts
 	find "${HOME}/.m2/repository/com/oiq" \
