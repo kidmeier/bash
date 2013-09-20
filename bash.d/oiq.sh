@@ -208,12 +208,18 @@ function oiq-deploy() {
 		rm -rf "${war/.war//}"
 	done
 
-	# unzip the dist
+	# update dist files
 	unzip \
-		-u \
 		-o \
+		-u \
 		-d "$OIQ_DEPLOY/product" \
-		-x "$OIQ_SRC/${product}-dist/target/${product}-dist-${version}-product.zip"
+		"$OIQ_SRC/${product}-dist/target/${product}-dist-${version}-product.zip"
+
+	# force overwrite configuration files
+	unzip \
+		-o -d "$OIQ_DEPLOY/product" \
+		"$OIQ_SRC/${product}-dist/target/${product}-dist-${version}-product.zip" \
+		"home/conf/*" "home/dist/*"
 
 	# configure
 	ant -f "$OIQ_HOME/build.xml" \
@@ -269,13 +275,21 @@ function oiq-mount-mvn-repo() {
 
 }
 
-function oiq-umount-mvn-repo() {
+function oiq-persist-mvn-repo() {
 
 	local repo="$HOME/.m2/repository"
 	local restorefrom="$HOME/.m2/persistent-repository"
-
+	
 	rsync -acvz --delete --exclude="com/oiq/*" "${repo}/" "${restorefrom}/"
-	sudo umount "${repo}"
+
+}
+
+function oiq-umount-mvn-repo() {
+
+	local repo="$HOME/.m2/repository"
+
+	oiq-persist-mvn-repo \
+		&& sudo umount "${repo}"
 
 }
 
