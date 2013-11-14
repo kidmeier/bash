@@ -5,6 +5,7 @@ export OIQ_HOME="$OIQ_DEPLOY/product/home"
 export OIQ_CACHE="$OIQ_HOME/../../cache"
 export OIQ_MINING="$OIQ_HOME/base/mining"
 export OIQ_TOMCAT="$OIQ_HOME/base/tomcat"
+export OIQ_UI="$OIQ_HOME/base/ui"
 
 elProject="*[local-name()='project']"
 elVersion="*[local-name()='version']"
@@ -26,67 +27,6 @@ export PATH="$HOME/devl/tools/jdk1.7.0_25/bin:$PATH"
 export JDWP="-agentlib:jdwp=transport=dt_socket,suspend=n,address=localhost:8000,server=y"
 export CATALINA_OPTS="-Dhippoecm.export.dir=$OIQ_SRC/insure-web/src/main/resources $CATALINA_OPTS"
 
-alias jmeter-pids='jps -l|grep ApacheJMeter.jar|cut -d " " -f 1'
-function jmeter-stopall() {
-	for p in `jmeter-pids`
-	do
-		local pid_jmx="$(jmeter-jmx $p)"
-		local pid="$(echo $pid_jmx|sed -e 's/\([0-9]*\)\( | \)\(.*$\)/\1/')"
-		local jmx="$(echo $pid_jmx|sed -e 's/\([0-9]*\)\( | \)\(.*$\)/\3/')"
-
-		echo "kill $pid | $jmx" && kill "$pid"
-	done
-}
-
-function jmeter-ls() {
-	for p in `jmeter-pids`
-	do 
-		echo `jmeter-jmx "$p"`
-	done
-}
-
-function jmeter-jmx() {
-	test -n "$1" || (echo "usage: jmeter-jmx <pid>" && return 1)
-	local pid="$1"
-
-	if [ -f "/proc/$pid/cmdline" ]
-	then
-		echo "$pid | \"$(oiq-shorten-path "`cat /proc/$pid/cmdline | tr '\0' '\n' | grep \.jmx\$`")\""
-	else
-		echo "no such process: $pid"
-		return 2
-	fi
-}
-
-alias activemq-pid='jps -l|grep apache-activemq|cut -d " " -f 1'
-function activemq-stop() {
-	
-	local pid="`activemq-pid`"
-	if [ -z "$pid" ]
-	then
-		echo "activemq not running!?"
-		return 1
-	fi
-
-	echo "kill ${pid} | activemq" >&2
-	kill "$pid"
-   
-	while [ "$pid" == "`activemq-pid`" ]
-	do
-		echo "waiting for activemq to exit" >&2
-		sleep 1
-	done
-
-	echo "activemq is stopped" >&2
-	return 0
-
-}
-
-function oiq-activemq() {
-	test -n "`activemq-pid`" && echo "activemq already running!?" && return 0
-	"$OIQ_HOME/scripts/startup/activemq.sh"
-}
-
 function oiq-tomcat() {
 	test -n "`tomcat-pid`" && echo "tomcat already running!?" && return 0
 	"$OIQ_HOME/bin/tomcat-cache.sh"
@@ -97,25 +37,16 @@ function oiq-tomcat-uncached() {
 	"$OIQ_HOME/bin/tomcat.sh"
 }	
 
-#function oiq-jmeter() {
-#	test -n "`jmeter-pids`" && echo "jmeter(s) already running!?" && return 0
-#	"$OIQ_HOME/scripts/startup/qaq-jmeter.sh"
-#}
-
 function oiq-startall() {
-#	oiq-activemq && oiq-tomcat && oiq-jmeter
 	oiq-tomcat
 }
 
 function oiq-stop() {
 	tomcat-stop
-#	jmeter-stopall
 }
 
 function oiq-stopall() {
 	tomcat-stop
-#	jmeter-stopall
-#	activemq-stop
 }
 
 function oiq-restart() {
@@ -157,9 +88,11 @@ function oiq-clean-db() {
 	read pause
 
 	cat <<EOF | mysql -u root -p
+DROP DATABASE IF EXISTS std_${environment};
 DROP DATABASE IF EXISTS fleet_${environment};
 DROP DATABASE IF EXISTS insure_${environment};
 
+CREATE DATABASE std_${environment} DEFAULT CHARACTER SET utf8;
 CREATE DATABASE fleet_${environment} DEFAULT CHARACTER SET utf8;
 CREATE DATABASE insure_${environment} DEFAULT CHARACTER SET utf8;
 EOF
@@ -201,12 +134,12 @@ function oiq-deploy() {
 	local revision=$(git "--git-dir=$OIQ_SRC/.git" rev-parse --verify HEAD)
 	echo "[DEPLOY] ${version}-${revision}"
 
-	# remove any existing exploded wars; this will force a redeploy on the next start
-	for war in $OIQ_TOMCAT/webapps/*.war
-	do
-		echo " rm -rf `oiq-shorten-path ${war/.war//}`"
-		rm -rf "${war/.war//}"
-	done
+	# remove UI
+	rm -rf "$OIQ_UI/app"
+
+	# remove tomcat stuff
+	rm -rf "$OIQ_TOMCAT/conf"
+	rm -rf "$OIQ_TOMCAT/webapps"
 
 	# update dist files
 	unzip \
@@ -225,9 +158,6 @@ function oiq-deploy() {
 	ant -f "$OIQ_HOME/build.xml" \
 		"-Doiq.install.client=${client}" \
 		"-Doiq.install.type=${env}"
-
-	# install UI context
-	cp "$OIQ_HOME/base/ui/insure.xml" "$OIQ_HOME/base/tomcat/conf/Catalina/localhost"
 
 }
 
@@ -293,20 +223,20 @@ function oiq-umount-mvn-repo() {
 
 }
 
-### Incomplete ################################################################
-
-function oiq-smoketest() {
-
-	oiq-stopall
-
+function oiq-cache-entry() {
+	local entry="$1"; shift
+	echo "$OIQ_CACHE/${entry:0:2}/${entry:2:2}/${entry}"
 }
 
-function oiq-company-mining-log() {
+function oiq-cache-cat() {
+	cat `oiq-cache-entry "$1"`
+}
 
-	local oiqId="$1"
-	local logs="$(ls -1 $OIQ_HOME/logs/mining-company.log* | sort -r)"
-	local thread="$(cat $logs|grep "###oiqId=$oiqId"|sed -e 's/\(^[A-Z]* *[0-9][0-9] [a-zA-Z]* [0-9]* [0-9]*:[0-9]*:[0-9]*,[0-9]* \)\(Thread Group \)\([0-9-]* \)\(.*$\)/\3/')"
+function oiq-cache-cat-metadata() {
+	cat "`oiq-cache-entry "$1"`.json"
+}
 
-	cat $logs | grep "$thread" | less
-
+function oiq-cache-evict() {
+	rm "`oiq-cache-entry "$1"`"
+	rm "`oiq-cache-entry "$1"`.json"
 }
