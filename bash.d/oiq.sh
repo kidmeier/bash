@@ -237,6 +237,9 @@ function oiq-cache-cat-metadata() {
 }
 
 function oiq-cache-evict() {
-	rm "`oiq-cache-entry "$1"`"
-	rm "`oiq-cache-entry "$1"`.json"
+	for entry in "$@"
+	do
+		rm "`oiq-cache-entry "${entry}"`"
+		rm "`oiq-cache-entry "${entry}"`.json"
+	done
 }
